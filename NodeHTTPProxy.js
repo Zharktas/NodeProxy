@@ -1,7 +1,6 @@
 var httpProxy = require('http-proxy'),
 	util = require('util'),
-	colors = require('colors'),
-	http = require('http');
+	colors = require('colors');
 
 if ( process.argv.length > 2 && process.argv[2] == '--debug' ){
 	var debug = true;
@@ -18,8 +17,8 @@ var options = {
 };	
 
 
-var routes = eval(fs.readFileSync('routes.js', 'utf8'));
-
+var routefile = fs.readFileSync('routes.json', 'utf8');
+var routes = JSON.parse(routefile);
 
 var matchers = [];
 routes.forEach(function(route, index, routes){
@@ -44,18 +43,19 @@ function matches (url) {
 };
 
 httpProxy.createServer(function(req,res, proxy){
- 	var m = matches(req.url);
+
+    var m = matches(req.url);
 	if (m){
 		req.url = req.url.substr(m.path.length - 1);
 		
 		if ( debug == true ){
-			console.log("Proxying to: " + req.url);
+			console.log("Proxying to: " + m.host + ":" + m.port + req.url);
 		}
 		proxy.proxyRequest(req, res, {
 			host: m.host,
 			port: m.port
 		});
-	} 
+	}
 	else{
 		if ( debug == true ){
 			console.log("Proxying to: " + req.url);
@@ -77,9 +77,9 @@ var proxyServer = new httpProxy.HttpProxy({
 });
 
 https.createServer(options.https, function(req,res){
-	proxyServer.proxyRequest(req,res);
+    proxyServer.proxyRequest(req,res);
 }).listen(8080);;
 
 
 util.puts("Proxy Server".blue + ' running '.green.bold + ' on'.blue + " http://127.0.0.1:8000".yellow);
-util.puts("SSL Proxy Server".blue + ' running '.green.bold + ' on'.blue + " http://127.0.0.1:8080".yellow);
+util.puts("SSL Proxy Server".blue + ' running '.green.bold + ' on'.blue + " https://127.0.0.1:8080".yellow);
