@@ -89,5 +89,3 @@ https.createServer(options.https, function(req,res){
 }).listen(8080);
 
 
-util.puts("Proxy Server".blue + ' running '.green.bold + ' on'.blue + " http://127.0.0.1:8000".yellow);
-util.puts("SSL Proxy Server".blue + ' running '.green.bold + ' on'.blue + " https://127.0.0.1:8080".yellow);
