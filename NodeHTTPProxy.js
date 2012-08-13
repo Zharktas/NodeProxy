@@ -42,7 +42,9 @@ function matches (url) {
 	return;
 };
 
-httpProxy.createServer(function(req,res, proxy){
+var visualizer = require('./Request-Visualizer.js');
+
+httpProxy.createServer(visualizer.log, function(req,res, proxy){
 
     var m = matches(req.url);
 	if (m){
