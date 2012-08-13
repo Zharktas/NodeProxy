@@ -1,6 +1,5 @@
 var httpProxy = require('http-proxy'),
-	util = require('util'),
-	colors = require('colors');
+	util = require('util');
 
 if ( process.argv.length > 2 && process.argv[2] == '--debug' ){
 	var debug = true;
@@ -21,12 +20,13 @@ var routefile = fs.readFileSync('routes.json', 'utf8');
 var routes = JSON.parse(routefile);
 
 var matchers = [];
-routes.forEach(function(route, index, routes){
+routes.forEach(function(route){
 	var r = new RegExp(route.path.replace(/\//, '\^\\/'));
 	var matcher = { 
 			'path': route.path,
 			'host': route.host,
 			'port': route.port,
+            'stripBase': route.stripBase,
 			'r': r
 		};
 	matchers.push(matcher);
@@ -34,20 +34,26 @@ routes.forEach(function(route, index, routes){
 
 function matches (url) {
 	for ( var i in matchers ){
-		var m = url.match(matchers[i].r);
-		if (m){
-			return { 'path': matchers[i].path, 'host': matchers[i].host, 'port': matchers[i].port }
-		}
-	};
-	return;
-};
+        if (matchers.hasOwnProperty(i)){
+		    var m = url.match(matchers[i].r);
+		    if (m){
+			    return { 'path': matchers[i].path,
+                    'host': matchers[i].host,
+                    'port': matchers[i].port,
+                    'stripBase': matchers[i].stripBase }
+		    }
+        }
+	}
+    return null;
+}
 
 httpProxy.createServer(function(req,res, proxy){
 
     var m = matches(req.url);
 	if (m){
-		req.url = req.url.substr(m.path.length - 1);
-		
+		if (m.stripBase == true){
+            req.url = req.url.substr(m.path.length - 1);
+        }
 		if ( debug == true ){
 			console.log("Proxying to: " + m.host + ":" + m.port + req.url);
 		}
@@ -78,7 +84,7 @@ var proxyServer = new httpProxy.HttpProxy({
 
 https.createServer(options.https, function(req,res){
     proxyServer.proxyRequest(req,res);
-}).listen(8080);;
+}).listen(8080);
 
 
 util.puts("Proxy Server".blue + ' running '.green.bold + ' on'.blue + " http://127.0.0.1:8000".yellow);
